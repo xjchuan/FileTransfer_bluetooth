@@ -15,7 +15,7 @@ public class TargetFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        final View view = inflater.inflate(R.layout.layout, container, false);
+        //final View view = inflater.inflate(R.layout.layout, container, false);
         return null;
     }
 
