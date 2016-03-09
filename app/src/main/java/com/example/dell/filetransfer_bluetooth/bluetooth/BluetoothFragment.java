@@ -1,6 +1,8 @@
 package com.example.dell.filetransfer_bluetooth.bluetooth;
 
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -18,6 +20,7 @@ public abstract class BluetoothFragment extends Fragment {
 
     private Intent intentToBluetootthService;
     private BluetoothService bluetoothService;
+    private BluetoothAdapter bluetoothAdapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -53,19 +56,49 @@ public abstract class BluetoothFragment extends Fragment {
     }
 
 
+    /*
+     * 打开蓝牙
+     */
+    public void turnOnBluetooth(){
+        Log.d(TAG, "turnOnBluetooth()");
+        if(bluetoothAdapter==null){
+            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        }
+        if(!bluetoothAdapter.isEnabled()) {
+            Intent intent=new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(intent, 0);Log.i(TAG, "startActivityForResult ");
+        }
+    }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data){
+        if(requestCode == 0) {
+            if (resultCode == Activity.RESULT_OK) {
+                bindBluetoothService();
+                Log.i(TAG,"agree to open bluetooth ");
+            }
+            else
+                Log.i(TAG,"cancel opening bluetooth");
+        }
+    }
     /**
      * 启动蓝牙等一系列工作
      */
     protected void startWork(){
-        this.getActivity().bindService(intentToBluetootthService, serviceConnection, Context.BIND_AUTO_CREATE);
+        turnOnBluetooth();
     }
 
+    protected  void bindBluetoothService(){
+        this.getActivity().bindService(intentToBluetootthService, serviceConnection, Context.BIND_AUTO_CREATE);
+    }
     /**
      * 关闭蓝牙等一系列工作
      */
     protected void stopWork(){
-        this.getActivity().unbindService(serviceConnection);
+        if(bluetoothService!=null) {
+            this.getActivity().unbindService(serviceConnection);
+            bluetoothService.turnOffBluetooth();
+        }
     }
 
     /**

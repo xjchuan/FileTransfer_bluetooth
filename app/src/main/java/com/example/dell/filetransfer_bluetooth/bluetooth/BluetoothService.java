@@ -62,7 +62,7 @@ public class BluetoothService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         Log.i(TAG, "onBind()");
-        turnOnBluetooth();
+        //turnOnBluetooth();
         startDiscovery();
         return new MyBinder();
     }
@@ -96,19 +96,7 @@ public class BluetoothService extends Service {
         return bluetoothAddress;
     }
 
-    public void turnOnBluetooth(){
-        Log.d(TAG, "turnOnBluetooth()");
-        if(bluetoothAdapter==null){
-            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        }
-        if(bluetoothAdapter.isEnabled()==false) {
-            ///应修改提示
-            //请求用户开启蓝牙。
-            Intent intent=new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-        }
-    }
+
 
     public void turnOffBluetooth(){
         Log.d(TAG,"turnOffBluetooth()");
@@ -118,8 +106,7 @@ public class BluetoothService extends Service {
     }
 
     public void startDiscovery(){
-        Log.d(TAG, "startDiscovery()");
-        if(bluetoothAdapter.isEnabled() && bluetoothAdapter.isDiscovering())
+        if(bluetoothAdapter.isEnabled())
         {
             deviceArrayList.clear();
             deviceNameList.clear();
@@ -128,13 +115,17 @@ public class BluetoothService extends Service {
             registerReceiver(discoveryResult, new IntentFilter(
                     BluetoothDevice.ACTION_FOUND));
             bluetoothAdapter.startDiscovery();
+            Log.i(TAG,"startDiscovery");
         }
+        else
+            Log.i(TAG,"Failed to startDiscovery");
     }
 
     public void stopDiscovery(){
         if(bluetoothAdapter.isDiscovering()){
             bluetoothAdapter.cancelDiscovery();
             unregisterReceiver(discoveryResult);
+            Log.i(TAG, "stopDiscovery");
         }
 
     }
@@ -212,7 +203,7 @@ public class BluetoothService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             String name = intent.getStringExtra(BluetoothDevice.EXTRA_NAME);
-            Log.d(TAG,"discoeried bluetooth device name:"+name);
+            Log.d(TAG,"discoveried bluetooth device name:"+name);
 
             if(name==null){
                 name="no name";

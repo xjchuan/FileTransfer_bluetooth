@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import com.example.dell.filetransfer_bluetooth.R;
 import com.example.dell.filetransfer_bluetooth.bluetooth.BluetoothFragment;
@@ -13,6 +14,7 @@ import com.example.dell.filetransfer_bluetooth.bluetooth.BluetoothFragment;
 public class TransfereFragment extends BluetoothFragment {
     public static final String TAG="TransferFragment";
 
+    Button bluetooth_button;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
@@ -23,12 +25,32 @@ public class TransfereFragment extends BluetoothFragment {
     @Override
     public View onCreateView(LayoutInflater inflater,ViewGroup container,Bundle savedInstanceState){
         Log.i(TAG, "onCreateView()");
-        return null;
+        final View view = inflater.inflate(R.layout.transfer, container, false);
+
+        //设置button的作用
+        bluetooth_button = (Button)view.findViewById(R.id.bluetooth_button);
+        bluetooth_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                bluetooth_button.setText("正在扫描...");
+                bluetooth_button.setClickable(false);
+
+                startWork();
+            }
+        });
+        return view;
     }
 
     @Override
     public void updateUI(int what,Bundle bundle){
 
+    }
+
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        stopWork();
     }
 
 }
