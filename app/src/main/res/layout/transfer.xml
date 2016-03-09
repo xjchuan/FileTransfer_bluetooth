@@ -8,6 +8,7 @@
         android:id="@+id/bluetooth_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="蓝牙未连接"/>
+        android:text="@string/button_unclick"
+        />
 
 </LinearLayout>

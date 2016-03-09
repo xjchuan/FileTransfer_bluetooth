@@ -35,6 +35,7 @@ public class BluetoothService extends Service {
     private ArrayAdapter arrayAdapter;
 
     private String bluetoothAddress;
+    private String bluetoothName;
     private BluetoothSocket bluetoothSocket;
     private Thread bluetoothDataReadThread;
 
@@ -88,8 +89,9 @@ public class BluetoothService extends Service {
         this.handler=handler;
     }
 
-    public void setBluetoothAddress(String bluetoothAddress){
+    public void setBluetoothAddressAndName(String bluetoothAddress,String bluetoothName){
         this.bluetoothAddress=bluetoothAddress;
+        this.bluetoothName = bluetoothName;
     }
 
     public String getBluetoothAddress(){
@@ -114,6 +116,14 @@ public class BluetoothService extends Service {
 
             registerReceiver(discoveryResult, new IntentFilter(
                     BluetoothDevice.ACTION_FOUND));
+
+            //使蓝牙设备可见，方便配对
+            Intent in=new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+            in.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            in.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 200);
+            startActivity(in);
+
+
             bluetoothAdapter.startDiscovery();
             Log.i(TAG,"startDiscovery");
         }
@@ -138,15 +148,20 @@ public class BluetoothService extends Service {
                 public void run() {
                     try {
                         bluetoothSocket = device.createRfcommSocketToServiceRecord(MY_UUID);
-                        bluetoothSocket.connect();
-                        Log.d(TAG, "bluetoothSocket.connect()");
-                        //donot close the socket
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    finally {
-                        readData();
-                    }
+                    Log.i(TAG, "bluetoothSocket.connecting()");
+                        while(true){
+                            try {
+                                bluetoothSocket.connect();
+                            } catch (IOException e) {
+                                Log.e(TAG, "bluetoothSocket.connect failed");
+                            }
+                            if(bluetoothSocket!=null)
+                                break;
+                        }
+                        Log.i(TAG, "bluetoothSocket.connected()");
                 }
             }).start();
         }

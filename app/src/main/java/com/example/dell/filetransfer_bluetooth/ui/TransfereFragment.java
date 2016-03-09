@@ -32,7 +32,7 @@ public class TransfereFragment extends BluetoothFragment {
         bluetooth_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                bluetooth_button.setText("正在扫描...");
+                bluetooth_button.setText(R.string.button_click);
                 bluetooth_button.setClickable(false);
 
                 startWork();
@@ -43,7 +43,10 @@ public class TransfereFragment extends BluetoothFragment {
 
     @Override
     public void updateUI(int what,Bundle bundle){
-
+        if(what == R.integer.change_buttontext) {
+            bluetooth_button.setText(R.string.button_unclick);
+            bluetooth_button.setClickable(true);
+        }
     }
 
 

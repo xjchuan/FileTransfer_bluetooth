@@ -15,6 +15,8 @@ import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 
+import com.example.dell.filetransfer_bluetooth.R;
+
 public abstract class BluetoothFragment extends Fragment {
     private static final String TAG="BluetoothFragment";
 
@@ -31,25 +33,25 @@ public abstract class BluetoothFragment extends Fragment {
 
     private void getBluetoothAddressByDialog(){
         if(bluetoothService!=null){
-            new AlertDialog
-                    .Builder(getContext())
-                    .setTitle("Bluetooth List")
+            AlertDialog.Builder alertDialog =new AlertDialog.Builder(getContext());
+            alertDialog.setTitle("Bluetooth List")
                     .setAdapter(bluetoothService.getArrayAdapter(),
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface arg0, final int which) {
                                     bluetoothService.stopDiscovery();
-                                    bluetoothService.setBluetoothAddress(bluetoothService
-                                            .getDeviceArrayList()
-                                            .get(which)
-                                            .getAddress());
+                                    bluetoothService.setBluetoothAddressAndName(bluetoothService
+                                                    .getDeviceArrayList().get(which).getAddress(),
+                                                    bluetoothService
+                                                    .getDeviceArrayList().get(which).getName());
                                     bluetoothService.connectToDevice();
                                 }
-                    })
+                            })
                     .setOnCancelListener(new DialogInterface.OnCancelListener() {
 
                         @Override
                         public void onCancel(DialogInterface arg0) {
-                            bluetoothService.stopDiscovery();
+                            handler.sendEmptyMessage(R.integer.change_buttontext);
+                            stopWork();
                         }
                     }).show();
         }
@@ -66,7 +68,11 @@ public abstract class BluetoothFragment extends Fragment {
         }
         if(!bluetoothAdapter.isEnabled()) {
             Intent intent=new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(intent, 0);Log.i(TAG, "startActivityForResult ");
+            startActivityForResult(intent, 0);
+        }
+        else{
+            //如果已经开启蓝牙了，就绑定service
+            bindBluetoothService();
         }
     }
 
@@ -77,8 +83,10 @@ public abstract class BluetoothFragment extends Fragment {
                 bindBluetoothService();
                 Log.i(TAG,"agree to open bluetooth ");
             }
-            else
-                Log.i(TAG,"cancel opening bluetooth");
+            else {
+                handler.sendEmptyMessage(R.integer.change_buttontext);
+                Log.i(TAG, "cancel opening bluetooth");
+            }
         }
     }
     /**
