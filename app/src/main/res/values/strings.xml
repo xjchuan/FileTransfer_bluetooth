@@ -2,7 +2,8 @@
     <string name="app_name">FileTransfer_bluetooth</string>
 
     <integer name="change_buttontext">0x001</integer>
+    <integer name="change_buttonUnused">0x002</integer>
 
-    <string name="button_unclick">蓝牙未连接</string>
-    <string name="button_click">连接中...</string>
+    <string name="button_unclick">关</string>
+    <string name="button_connected">已连接</string>
 </resources>

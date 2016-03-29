@@ -3,6 +3,7 @@ package com.example.dell.filetransfer_bluetooth.bluetooth;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -20,6 +21,8 @@ import com.example.dell.filetransfer_bluetooth.R;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -120,11 +123,13 @@ public class BluetoothService extends Service {
             //使蓝牙设备可见，方便配对
             Intent in=new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
             in.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            in.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 200);
             startActivity(in);
 
 
             bluetoothAdapter.startDiscovery();
+
+            // 监听以前绑定过的设备
+            listenpairedDevice();
             Log.i(TAG,"startDiscovery");
         }
         else
@@ -139,7 +144,39 @@ public class BluetoothService extends Service {
         }
 
     }
+    private void  listenpairedDevice(){
+        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+        // If there are paired devices
+        if (pairedDevices.size() > 0) {
+            // Loop through paired devices
+            for (BluetoothDevice device : pairedDevices) {
+                // Add the name and address to an array adapter to show in a ListView
+                waitingForConnect(device.getName());
+            }
+        }
+    }
+    public void waitingForConnect(final String name){
+            try {
+                final BluetoothServerSocket serverSocket
+                        = bluetoothAdapter.listenUsingRfcommWithServiceRecord(name, MY_UUID);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                            Log.i("TAG","waiting for accept  "+name);
+                            try {
+                                bluetoothSocket = serverSocket.accept(100*1000);
+                                handler.sendEmptyMessage(R.integer.change_buttonUnused);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                    }
+                }).start();
 
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+    }
     public void connectToDevice(){
         if(bluetoothAddress!=null){
             final BluetoothDevice device = bluetoothAdapter.getRemoteDevice(this.bluetoothAddress);
@@ -152,16 +189,14 @@ public class BluetoothService extends Service {
                         e.printStackTrace();
                     }
                     Log.i(TAG, "bluetoothSocket.connecting()");
-                        while(true){
-                            try {
-                                bluetoothSocket.connect();
-                            } catch (IOException e) {
-                                Log.e(TAG, "bluetoothSocket.connect failed");
-                            }
-                            if(bluetoothSocket!=null)
-                                break;
+                    try {
+                        while(!bluetoothSocket.isConnected()){
+                            bluetoothSocket.connect();
+                            handler.sendEmptyMessage(R.integer.change_buttonUnused);
                         }
-                        Log.i(TAG, "bluetoothSocket.connected()");
+                    } catch (IOException e) {
+                        Log.e(TAG, "bluetoothSocket.connect failed");
+                    }
                 }
             }).start();
         }
@@ -218,7 +253,7 @@ public class BluetoothService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             String name = intent.getStringExtra(BluetoothDevice.EXTRA_NAME);
-            Log.d(TAG,"discoveried bluetooth device name:"+name);
+            Log.d(TAG,"discovery bluetooth device name:"+name);
 
             if(name==null){
                 name="no name";
@@ -228,6 +263,7 @@ public class BluetoothService extends Service {
             deviceArrayList.add(device);
             deviceNameList.add(name);
             arrayAdapter.notifyDataSetChanged();
+            waitingForConnect(name);
         }
     };
 

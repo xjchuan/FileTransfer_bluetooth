@@ -104,7 +104,10 @@ public abstract class BluetoothFragment extends Fragment {
      */
     protected void stopWork(){
         if(bluetoothService!=null) {
-            this.getActivity().unbindService(serviceConnection);
+            try{
+                this.getActivity().unbindService(serviceConnection);
+            }
+            catch (Exception e){ }//不明错误会出现
             bluetoothService.turnOffBluetooth();
         }
     }
