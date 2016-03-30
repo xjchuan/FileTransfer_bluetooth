@@ -11,4 +11,9 @@
         android:text="@string/button_unclick"
         />
 
+    <Button
+        android:id="@+id/selectPicture"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="选择图片传输"/>
 </LinearLayout>

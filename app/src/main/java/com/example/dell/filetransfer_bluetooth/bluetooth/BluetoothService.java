@@ -1,14 +1,19 @@
 package com.example.dell.filetransfer_bluetooth.bluetooth;
 
+import android.app.ProgressDialog;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,10 +21,17 @@ import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
 import android.widget.ArrayAdapter;
+import android.widget.Toast;
 
 import com.example.dell.filetransfer_bluetooth.R;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Set;
@@ -43,7 +55,6 @@ public class BluetoothService extends Service {
     private Thread bluetoothDataReadThread;
 
     private Handler handler;
-
     public BluetoothService(){}
 
     @Override
@@ -97,9 +108,6 @@ public class BluetoothService extends Service {
         this.bluetoothName = bluetoothName;
     }
 
-    public String getBluetoothAddress(){
-        return bluetoothAddress;
-    }
 
 
 
@@ -166,6 +174,8 @@ public class BluetoothService extends Service {
                             try {
                                 bluetoothSocket = serverSocket.accept(100*1000);
                                 handler.sendEmptyMessage(R.integer.change_buttonUnused);
+                                new heartPackage().start();
+                                //new Thread(new BluetoothDataReadTask()).start();
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -193,7 +203,9 @@ public class BluetoothService extends Service {
                         while(!bluetoothSocket.isConnected()){
                             bluetoothSocket.connect();
                             handler.sendEmptyMessage(R.integer.change_buttonUnused);
+
                         }
+                        new heartPackage().start();
                     } catch (IOException e) {
                         Log.e(TAG, "bluetoothSocket.connect failed");
                     }
@@ -216,9 +228,8 @@ public class BluetoothService extends Service {
             bluetoothDataReadThread.interrupt();
             bluetoothDataReadThread=null;
         }
-        ///
-        /*if(bluetoothSocket!=null){
-            if(bluetoothSocket.isConnected()==true){
+        if(bluetoothSocket!=null){
+            if(bluetoothSocket.isConnected()){
                 try {
                     bluetoothSocket.close();
                 } catch (IOException e) {
@@ -226,10 +237,10 @@ public class BluetoothService extends Service {
                 }
             }
             bluetoothSocket=null;
-        }*/
+        }
     }
 
-    public void readData(){
+   /* public void readData(){
         //从蓝牙中读取数据
         if(handler!=null
                 &&bluetoothSocket.isConnected()){
@@ -239,7 +250,7 @@ public class BluetoothService extends Service {
         else{
             Log.e(TAG, "readData() error");
         }
-    }
+    }*/
 
 
 
@@ -255,11 +266,11 @@ public class BluetoothService extends Service {
             String name = intent.getStringExtra(BluetoothDevice.EXTRA_NAME);
             Log.d(TAG,"discovery bluetooth device name:"+name);
 
-            if(name==null){
-                name="no name";
-            }
             BluetoothDevice device = intent
                     .getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+            if(name==null || deviceArrayList.contains(device)){
+                return;
+            }
             deviceArrayList.add(device);
             deviceNameList.add(name);
             arrayAdapter.notifyDataSetChanged();
@@ -268,30 +279,25 @@ public class BluetoothService extends Service {
     };
 
 
+
     /**
      * 读取蓝牙数据的任务
      */
     private class BluetoothDataReadTask implements Runnable{
-        private BluetoothDataReadTask(BluetoothSocket bluetoothSocket,Handler handler){
-
-        }
 
         @Override
         public void run() {
             try {
-                readData();
+                DataInputStream dis = new DataInputStream(bluetoothSocket.getInputStream());
+                byte [] buffer = new byte[1024];
+                int length = 0;
+                while((length=dis.read(buffer,0,buffer.length)) > 0 )
+                    Log.i(TAG,""+length);
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
         }
-
-        /**
-         * 从蓝牙Socket中读取数据
-         * @throws IOException
-         */
-        private void readData() throws IOException {}
-
 
         private void sendErrorMessage(int what,String key,String value){
             Bundle bundle=new Bundle();
@@ -300,6 +306,103 @@ public class BluetoothService extends Service {
             errorMessage.what=what;
             errorMessage.setData(bundle);
             handler.sendMessage(errorMessage);
+        }
+    }
+
+    /////
+    public void startTransferFile(Uri uri,Context c){
+        new DownTask(c).execute(uri);
+    }
+    /**
+     * 异步任务，传输文件
+     */
+    class DownTask extends AsyncTask<Uri,Integer, String> {
+        ProgressDialog pdialog;
+        Context context;
+        DownTask(Context context){
+            this.context = context;
+        }
+
+        @Override
+        protected String doInBackground(Uri ...params) {
+            Uri uri = params[0];
+            Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+            sharingIntent.setType("*/*");
+            sharingIntent.setComponent(
+                    new ComponentName("com.android.bluetooth",
+                            "com.android.bluetooth.opp.BluetoothOppLauncherActivity"));
+            sharingIntent.putExtra(Intent.EXTRA_STREAM, uri);
+            sharingIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(sharingIntent);
+/*
+            try {
+                DataOutputStream dos = new DataOutputStream(bluetoothSocket.getOutputStream());
+                File file = new File("/storage/emulated/0/Pictures/Screenshots/Screenshot_2016-03-03-11-17-18-1.png");
+                FileInputStream fis = new FileInputStream(file);
+                byte []sendBytes = new byte[1024];
+                int length,hasTranfer=0;
+                while ((length = fis.read(sendBytes, 0, sendBytes.length)) > 0) {
+                    dos.write(sendBytes, 0, length);
+                    publishProgress(++hasTranfer);
+                    Log.i(TAG,hasTranfer+" "+ + length);
+                }
+                dos.flush();Log.i(TAG,"Transfer complete");
+                fis.close();
+                dos.close();
+            } catch (IOException e) {
+                Log.e(TAG, "Transfer IOException");
+                e.printStackTrace();
+            }*/
+            return null;
+        }
+
+        @Override
+        protected  void onPostExecute(String result){
+            pdialog.dismiss();
+        }
+
+        @Override
+        protected  void onPreExecute(){
+            pdialog = new ProgressDialog(context);
+            pdialog.setTitle("传输中");
+            pdialog.setMessage("waiting...");
+            pdialog.setCancelable(false);
+            pdialog.setMax(100);
+            pdialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            pdialog.setIndeterminate(false);
+            pdialog.show();
+        }
+
+        @Override
+        protected  void onProgressUpdate(Integer...value){
+            pdialog.setProgress(value[0]);
+        }
+    }
+
+
+    /**
+     *
+     * 心跳包，监听socket是否断开连接
+     */
+    class heartPackage extends Thread{
+
+        @Override
+        public void run() {
+            boolean isConnected = true;
+            while(isConnected && bluetoothSocket!= null) {
+
+                try {
+                    bluetoothSocket.getOutputStream().write(new byte[]{1});
+                    sleep(1000);
+                    Log.i(TAG, "heartPackage is working..");
+                } catch (IOException e) {
+                    isConnected = false;
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(handler != null)
+                handler.sendEmptyMessage(R.integer.change_buttontext);
         }
     }
 }

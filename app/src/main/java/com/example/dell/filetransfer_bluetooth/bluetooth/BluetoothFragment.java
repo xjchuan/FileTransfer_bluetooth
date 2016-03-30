@@ -21,7 +21,7 @@ public abstract class BluetoothFragment extends Fragment {
     private static final String TAG="BluetoothFragment";
 
     private Intent intentToBluetootthService;
-    private BluetoothService bluetoothService;
+    protected BluetoothService bluetoothService;
     private BluetoothAdapter bluetoothAdapter;
 
     @Override
@@ -50,8 +50,8 @@ public abstract class BluetoothFragment extends Fragment {
 
                         @Override
                         public void onCancel(DialogInterface arg0) {
-                            handler.sendEmptyMessage(R.integer.change_buttontext);
-                            stopWork();
+                            //handler.sendEmptyMessage(R.integer.change_buttontext);
+                            //stopWork();
                         }
                     }).show();
         }
@@ -84,7 +84,7 @@ public abstract class BluetoothFragment extends Fragment {
                 Log.i(TAG,"agree to open bluetooth ");
             }
             else {
-                handler.sendEmptyMessage(R.integer.change_buttontext);
+                //handler.sendEmptyMessage(R.integer.change_buttontext);
                 Log.i(TAG, "cancel opening bluetooth");
             }
         }
