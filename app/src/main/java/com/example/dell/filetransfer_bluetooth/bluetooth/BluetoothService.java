@@ -18,6 +18,7 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.widget.ArrayAdapter;
@@ -51,6 +52,7 @@ public class BluetoothService extends Service {
 
     private String bluetoothAddress;
     private String bluetoothName;
+    public BluetoothDevice bluetoothDevice;
     private BluetoothSocket bluetoothSocket;
     private Thread bluetoothDataReadThread;
 
@@ -103,9 +105,10 @@ public class BluetoothService extends Service {
         this.handler=handler;
     }
 
-    public void setBluetoothAddressAndName(String bluetoothAddress,String bluetoothName){
+    public void setBluetoothAddressAndNameAndDevice(String bluetoothAddress,String bluetoothName,BluetoothDevice d){
         this.bluetoothAddress=bluetoothAddress;
         this.bluetoothName = bluetoothName;
+        this.bluetoothDevice = d;
     }
 
 
@@ -159,11 +162,11 @@ public class BluetoothService extends Service {
             // Loop through paired devices
             for (BluetoothDevice device : pairedDevices) {
                 // Add the name and address to an array adapter to show in a ListView
-                waitingForConnect(device.getName());
+                waitingForConnect(device.getName(),device);
             }
         }
     }
-    public void waitingForConnect(final String name){
+    public void waitingForConnect(final String name, final BluetoothDevice device){
             try {
                 final BluetoothServerSocket serverSocket
                         = bluetoothAdapter.listenUsingRfcommWithServiceRecord(name, MY_UUID);
@@ -175,6 +178,7 @@ public class BluetoothService extends Service {
                                 bluetoothSocket = serverSocket.accept(100*1000);
                                 handler.sendEmptyMessage(R.integer.change_buttonUnused);
                                 new heartPackage().start();
+                                bluetoothDevice = device;
                                 //new Thread(new BluetoothDataReadTask()).start();
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -274,7 +278,7 @@ public class BluetoothService extends Service {
             deviceArrayList.add(device);
             deviceNameList.add(name);
             arrayAdapter.notifyDataSetChanged();
-            waitingForConnect(name);
+            waitingForConnect(name,device);
         }
     };
 
@@ -325,6 +329,7 @@ public class BluetoothService extends Service {
 
         @Override
         protected String doInBackground(Uri ...params) {
+
             Uri uri = params[0];
             Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
             sharingIntent.setType("*/*");
@@ -356,7 +361,7 @@ public class BluetoothService extends Service {
             return null;
         }
 
-        @Override
+       /* @Override
         protected  void onPostExecute(String result){
             pdialog.dismiss();
         }
@@ -376,7 +381,7 @@ public class BluetoothService extends Service {
         @Override
         protected  void onProgressUpdate(Integer...value){
             pdialog.setProgress(value[0]);
-        }
+        }*/
     }
 
 

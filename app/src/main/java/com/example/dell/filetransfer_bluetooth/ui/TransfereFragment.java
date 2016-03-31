@@ -40,21 +40,20 @@ public class TransfereFragment extends BluetoothFragment {
         button.setEnabled(false);
         toggleButton = (ToggleButton)view.findViewById(R.id.bluetooth_open);
 
-        button.setOnClickListener(new View.OnClickListener(){
-                @Override
-                public void onClick(View v){
-                    showFileChooser();
-                }
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showFileChooser();
+            }
         });
         toggleButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                switch(v.getId()){
+                switch (v.getId()) {
                     case R.id.bluetooth_open:
-                        if(((ToggleButton)v).isChecked()){
+                        if (((ToggleButton) v).isChecked()) {
                             startWork();
-                        }
-                        else{
+                        } else {
                             stopWork();
                         }
                         break;
@@ -71,15 +70,16 @@ public class TransfereFragment extends BluetoothFragment {
             toggleButton.setEnabled(true);
             toggleButton.setText(R.string.button_unclick);
             toggleButton.setChecked(false);
-
+            stopWork();
             Context c= getContext();
             if(c!=null)
-                Toast.makeText(c, "连接已断开", Toast.LENGTH_SHORT).show();
+                Toast.makeText(c,"连接已断开", Toast.LENGTH_SHORT).show();
         }
-        else if (what == R.integer.change_buttonUnused)
+        else if (what == R.integer.change_buttonUnused) {
             toggleButton.setEnabled(false);
             toggleButton.setText(R.string.button_connected);
             button.setEnabled(true);
+        }
     }
 
 
