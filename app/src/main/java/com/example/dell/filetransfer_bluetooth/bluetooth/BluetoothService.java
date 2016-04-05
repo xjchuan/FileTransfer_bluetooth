@@ -12,6 +12,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Binder;
@@ -24,13 +25,17 @@ import android.widget.ArrayAdapter;
 
 import com.example.dell.filetransfer_bluetooth.R;
 import com.example.dell.filetransfer_bluetooth.utils.FileUtils;
+import com.example.dell.filetransfer_bluetooth.utils.ReceiveDatabase;
+import com.example.dell.filetransfer_bluetooth.utils.SendDatabase;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
 
@@ -53,7 +58,7 @@ public class BluetoothService extends Service {
     private Thread bluetoothDataReadThread;
 
     private Handler handler;
-
+    private Context context;
     BroadcastReceiver accptedbroadcastReceiver;
     BroadcastReceiver sendedbroadcastReceiver;
     public BluetoothService(){}
@@ -80,8 +85,8 @@ public class BluetoothService extends Service {
         Log.i(TAG, "onBind()");
         //turnOnBluetooth();
         startDiscovery();
-        registerSendingBroadcastReceiver();
-        registerAcceptedBroadcastReceiver();
+        /*registerSendingBroadcastReceiver();
+        registerAcceptedBroadcastReceiver();*/
         return new MyBinder();
     }
 
@@ -90,8 +95,8 @@ public class BluetoothService extends Service {
         Log.i(TAG, "onUnbind()");
         disconnectToDevice();
         stopDiscovery();
-        unRegisterAcceptedBroadcastReceiver();
-        unRegisterSendingBroadcastReceiver();
+        /*unRegisterAcceptedBroadcastReceiver();
+        unRegisterSendingBroadcastReceiver();*/
         turnOffBluetooth();
         return super.onUnbind(intent);
     }
@@ -106,6 +111,9 @@ public class BluetoothService extends Service {
 
     public void setHandler(Handler handler){
         this.handler=handler;
+    }
+    public void setContext(Context c){
+        this.context=c;
     }
 
     public void setBluetoothAddressAndNameAndDevice(String bluetoothAddress,String bluetoothName,BluetoothDevice d){
@@ -290,6 +298,7 @@ public class BluetoothService extends Service {
         @Override
         public void run() {
             InputStream dis = null;
+            ReceiveDatabase rd = null;
             StringBuilder sb = new StringBuilder();
             try {
                 Log.i(TAG, "get inputStream");
@@ -297,15 +306,27 @@ public class BluetoothService extends Service {
                 byte[] buffer = new byte[1024];
                 int length;
                 while (bluetoothSocket.isConnected() && bluetoothSocket != null) {
-                    Log.i(TAG, "writing");
+                    sb.delete(0,sb.length());
                     while ((length = dis.read(buffer,0,buffer.length)) > 1)
                         Log.i(TAG, "buffer content: " + sb.append(new String(buffer,0,length, "UTF-8")));
-                    Log.i(TAG, "written");
-
+                    if(sb.length()!=0){
+                        rd = new ReceiveDatabase(context,"receive,db3",2);
+                        rd.insert(bluetoothName,
+                                new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date()),
+                                sb.toString());
+                        rd.close();
+                    }
+                    Thread.sleep(1*1000);
                 }
+
             } catch (IOException e) {
                 Log.e(TAG, "DataInputStream is closed!");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             } finally {
+                if(rd!=null)
+                    rd.close();
+
                 if (dis != null)
                     try {
                         dis.close();
@@ -319,7 +340,7 @@ public class BluetoothService extends Service {
 
 
     /**
-     * 读取蓝牙数据的任务
+     * 发送蓝牙数据的任务
      */
     private class BluetoothDataWriteTask extends Thread {
 
@@ -335,16 +356,23 @@ public class BluetoothService extends Service {
         @Override
         public void run() {
             OutputStream dos = null;
+            SendDatabase sd=null;
             try {
                 dos = bluetoothSocket.getOutputStream();
                 byte[] buffer = s.getBytes();
                 dos.write(buffer);
                 dos.flush();
                 Log.i(TAG, "sending content: " + s);
-
+                sd = new SendDatabase(context,"send,db3",2);
+                sd.insert(bluetoothName,
+                        new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date()),
+                        s);
+                sd.close();
             } catch (IOException e) {
                 Log.e(TAG, "DataOutputStream is closed!");
             } finally {
+                if(sd!=null)
+                    sd.close();
                 /*if (dos != null)
                     try {
                         dos.close();
@@ -477,10 +505,13 @@ public class BluetoothService extends Service {
         }
     }
 
+/*
 
-    /**
+    */
+/**
      * 监听接受文件广播
-     */
+     *//*
+
     private void registerAcceptedBroadcastReceiver() {
         accptedbroadcastReceiver = new BroadcastReceiver() {
             public void onReceive(Context context, Intent intent) {
@@ -496,9 +527,11 @@ public class BluetoothService extends Service {
             unregisterReceiver(accptedbroadcastReceiver);
     }
 
-    /**
+    */
+/**
      * 监听发送文件广播
-     */
+     *//*
+
     private void registerSendingBroadcastReceiver() {
         sendedbroadcastReceiver = new BroadcastReceiver() {
             public void onReceive(Context context, Intent intent) {
@@ -521,5 +554,6 @@ public class BluetoothService extends Service {
         if(sendedbroadcastReceiver != null)
             unregisterReceiver(sendedbroadcastReceiver);
     }
+*/
 
 }

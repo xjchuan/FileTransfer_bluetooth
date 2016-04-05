@@ -130,6 +130,7 @@ public abstract class BluetoothFragment extends Fragment {
             Log.i(TAG, "onServiceConnected()");
             bluetoothService=((BluetoothService.MyBinder)service).getService();
             bluetoothService.setHandler(handler);
+            bluetoothService.setContext(getContext());
             getBluetoothAddressByDialog();
         }
 

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -18,6 +19,8 @@ import android.widget.ToggleButton;
 import com.example.dell.filetransfer_bluetooth.R;
 import com.example.dell.filetransfer_bluetooth.bluetooth.BluetoothFragment;
 import com.example.dell.filetransfer_bluetooth.utils.FileUtils;
+import com.example.dell.filetransfer_bluetooth.utils.ReceiveDatabase;
+import com.example.dell.filetransfer_bluetooth.utils.SendDatabase;
 
 
 public class TransfereFragment extends BluetoothFragment {
@@ -29,6 +32,7 @@ public class TransfereFragment extends BluetoothFragment {
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate()");
+
     }
 
     @Override
