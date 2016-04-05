@@ -1,5 +1,6 @@
 package com.example.dell.filetransfer_bluetooth.bluetooth;
 
+import android.app.DownloadManager;
 import android.app.ProgressDialog;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -8,7 +9,6 @@ import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -18,23 +18,19 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.widget.ArrayAdapter;
-import android.widget.Toast;
 
 import com.example.dell.filetransfer_bluetooth.R;
+import com.example.dell.filetransfer_bluetooth.utils.FileUtils;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.UUID;
 
@@ -57,6 +53,9 @@ public class BluetoothService extends Service {
     private Thread bluetoothDataReadThread;
 
     private Handler handler;
+
+    BroadcastReceiver accptedbroadcastReceiver;
+    BroadcastReceiver sendedbroadcastReceiver;
     public BluetoothService(){}
 
     @Override
@@ -81,6 +80,8 @@ public class BluetoothService extends Service {
         Log.i(TAG, "onBind()");
         //turnOnBluetooth();
         startDiscovery();
+        registerSendingBroadcastReceiver();
+        registerAcceptedBroadcastReceiver();
         return new MyBinder();
     }
 
@@ -89,6 +90,8 @@ public class BluetoothService extends Service {
         Log.i(TAG, "onUnbind()");
         disconnectToDevice();
         stopDiscovery();
+        unRegisterAcceptedBroadcastReceiver();
+        unRegisterSendingBroadcastReceiver();
         turnOffBluetooth();
         return super.onUnbind(intent);
     }
@@ -167,29 +170,31 @@ public class BluetoothService extends Service {
         }
     }
     public void waitingForConnect(final String name, final BluetoothDevice device){
-            try {
-                final BluetoothServerSocket serverSocket
-                        = bluetoothAdapter.listenUsingRfcommWithServiceRecord(name, MY_UUID);
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                            Log.i("TAG","waiting for accept  "+name);
-                            try {
-                                bluetoothSocket = serverSocket.accept(100*1000);
-                                handler.sendEmptyMessage(R.integer.change_buttonUnused);
-                                new heartPackage().start();
-                                bluetoothDevice = device;
-                                //new Thread(new BluetoothDataReadTask()).start();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                    }
-                }).start();
+        try {
+            final BluetoothServerSocket serverSocket
+                    = bluetoothAdapter.listenUsingRfcommWithServiceRecord(name, MY_UUID);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Log.i("TAG", "waiting for accept  "+name);
+                    try {
+                        bluetoothSocket = serverSocket.accept(100*1000);
+                        handler.sendEmptyMessage(R.integer.change_buttonUnused);
+                        new heartPackage().start();
+                        bluetoothDevice = device;
 
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
+                        //等待读取数据
+                        new Thread(new BluetoothDataReadTask()).start();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     public void connectToDevice(){
         if(bluetoothAddress!=null){
@@ -207,11 +212,12 @@ public class BluetoothService extends Service {
                         while(!bluetoothSocket.isConnected()){
                             bluetoothSocket.connect();
                             handler.sendEmptyMessage(R.integer.change_buttonUnused);
-
                         }
+                        //等待读取数据
+                        new Thread(new BluetoothDataReadTask()).start();
                         new heartPackage().start();
                     } catch (IOException e) {
-                        Log.e(TAG, "bluetoothSocket.connect failed");
+                        Log.e(TAG, "bluetoothSocket connect failed");
                     }
                 }
             }).start();
@@ -221,17 +227,9 @@ public class BluetoothService extends Service {
         }
     }
 
-    public void connectToDevice(String bluetoothAddress){
-        this.bluetoothAddress=bluetoothAddress;
-        connectToDevice();
-    }
 
     public void disconnectToDevice(){
         Log.i(TAG,"disconnectToDevice()");
-        if(bluetoothDataReadThread!=null){
-            bluetoothDataReadThread.interrupt();
-            bluetoothDataReadThread=null;
-        }
         if(bluetoothSocket!=null){
             if(bluetoothSocket.isConnected()){
                 try {
@@ -287,31 +285,86 @@ public class BluetoothService extends Service {
     /**
      * 读取蓝牙数据的任务
      */
-    private class BluetoothDataReadTask implements Runnable{
+    private class BluetoothDataReadTask implements Runnable {
 
         @Override
         public void run() {
+            InputStream dis = null;
+            StringBuilder sb = new StringBuilder();
             try {
-                DataInputStream dis = new DataInputStream(bluetoothSocket.getInputStream());
-                byte [] buffer = new byte[1024];
-                int length = 0;
-                while((length=dis.read(buffer,0,buffer.length)) > 0 )
-                    Log.i(TAG,""+length);
+                Log.i(TAG, "get inputStream");
+                dis = bluetoothSocket.getInputStream();
+                byte[] buffer = new byte[1024];
+                int length;
+                while (bluetoothSocket.isConnected() && bluetoothSocket != null) {
+                    Log.i(TAG, "writing");
+                    while ((length = dis.read(buffer,0,buffer.length)) > 1)
+                        Log.i(TAG, "buffer content: " + sb.append(new String(buffer,0,length, "UTF-8")));
+                    Log.i(TAG, "written");
+
+                }
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "DataInputStream is closed!");
+            } finally {
+                if (dis != null)
+                    try {
+                        dis.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
             }
 
         }
+    }
 
-        private void sendErrorMessage(int what,String key,String value){
-            Bundle bundle=new Bundle();
-            bundle.putString(key, value);
-            Message errorMessage=new Message();
-            errorMessage.what=what;
-            errorMessage.setData(bundle);
-            handler.sendMessage(errorMessage);
+
+    /**
+     * 读取蓝牙数据的任务
+     */
+    private class BluetoothDataWriteTask extends Thread {
+
+        String s;
+
+        BluetoothDataWriteTask() {
+        }
+
+        BluetoothDataWriteTask(String s) {
+            this.s = s;
+        }
+
+        @Override
+        public void run() {
+            OutputStream dos = null;
+            try {
+                dos = bluetoothSocket.getOutputStream();
+                byte[] buffer = s.getBytes();
+                dos.write(buffer);
+                dos.flush();
+                Log.i(TAG, "sending content: " + s);
+
+            } catch (IOException e) {
+                Log.e(TAG, "DataOutputStream is closed!");
+            } finally {
+                /*if (dos != null)
+                    try {
+                        dos.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }*/
+            }
+
         }
     }
+
+    private void sendErrorMessage(int what,String key,String value){
+        Bundle bundle=new Bundle();
+        bundle.putString(key, value);
+        Message errorMessage=new Message();
+        errorMessage.what=what;
+        errorMessage.setData(bundle);
+        handler.sendMessage(errorMessage);
+    }
+
 
     /////
     public void startTransferFile(Uri uri,Context c){
@@ -322,6 +375,7 @@ public class BluetoothService extends Service {
      */
     class DownTask extends AsyncTask<Uri,Integer, String> {
         ProgressDialog pdialog;
+        String fileName;
         Context context;
         DownTask(Context context){
             this.context = context;
@@ -331,6 +385,14 @@ public class BluetoothService extends Service {
         protected String doInBackground(Uri ...params) {
 
             Uri uri = params[0];
+
+            String path = FileUtils.getPath(context, uri);
+            if(path==null)
+                path = "noName";
+            fileName = path.substring(path.lastIndexOf("/") + 1, path.length());
+            Log.i(TAG, uri + " " + "fileName  " + fileName);
+
+
             Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
             sharingIntent.setType("*/*");
             sharingIntent.setComponent(
@@ -339,6 +401,9 @@ public class BluetoothService extends Service {
             sharingIntent.putExtra(Intent.EXTRA_STREAM, uri);
             sharingIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(sharingIntent);
+
+
+
 /*
             try {
                 DataOutputStream dos = new DataOutputStream(bluetoothSocket.getOutputStream());
@@ -361,11 +426,12 @@ public class BluetoothService extends Service {
             return null;
         }
 
-       /* @Override
+       @Override
         protected  void onPostExecute(String result){
-            pdialog.dismiss();
+            new BluetoothDataWriteTask(fileName).start();
+           // pdialog.dismiss();
         }
-
+/*
         @Override
         protected  void onPreExecute(){
             pdialog = new ProgressDialog(context);
@@ -399,7 +465,7 @@ public class BluetoothService extends Service {
                 try {
                     bluetoothSocket.getOutputStream().write(new byte[]{1});
                     sleep(1000);
-                    Log.i(TAG, "heartPackage is working..");
+                    //Log.i(TAG, "heartPackage is working..");
                 } catch (IOException e) {
                     isConnected = false;
                 } catch (InterruptedException e) {
@@ -410,4 +476,50 @@ public class BluetoothService extends Service {
                 handler.sendEmptyMessage(R.integer.change_buttontext);
         }
     }
+
+
+    /**
+     * 监听接受文件广播
+     */
+    private void registerAcceptedBroadcastReceiver() {
+        accptedbroadcastReceiver = new BroadcastReceiver() {
+            public void onReceive(Context context, Intent intent) {
+                Log.i(TAG,"transfer file");
+            }
+        };
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+        registerReceiver(accptedbroadcastReceiver, filter);
+
+    }
+    private void unRegisterAcceptedBroadcastReceiver(){
+        if(accptedbroadcastReceiver != null)
+            unregisterReceiver(accptedbroadcastReceiver);
+    }
+
+    /**
+     * 监听发送文件广播
+     */
+    private void registerSendingBroadcastReceiver() {
+        sendedbroadcastReceiver = new BroadcastReceiver() {
+            public void onReceive(Context context, Intent intent) {
+                int handoverStatus = intent.getIntExtra("android.btopp.intent.extra.BT_OPP_TRANSFER_STATUS",1);
+                //0表示传输成功，1表示失败
+                if (handoverStatus == 0) {
+                    Log.i(TAG,"transfer successfully!");
+                }
+                else{
+                    Log.i(TAG,"transfer rejected!");
+
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter("android.btopp.intent.action.BT_OPP_TRANSFER_DONE");
+        registerReceiver(sendedbroadcastReceiver, filter);
+
+    }
+    private void unRegisterSendingBroadcastReceiver(){
+        if(sendedbroadcastReceiver != null)
+            unregisterReceiver(sendedbroadcastReceiver);
+    }
+
 }

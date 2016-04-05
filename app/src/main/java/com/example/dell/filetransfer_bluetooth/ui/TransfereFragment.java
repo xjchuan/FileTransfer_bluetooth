@@ -112,8 +112,7 @@ public class TransfereFragment extends BluetoothFragment {
                 if (resultCode == Activity.RESULT_OK) {
                     // Get the Uri of the selected file
                     Uri uri = data.getData();
-                    String path = FileUtils.getPath(this.getContext(), uri);
-                    Log.i(TAG, "uri "+uri+" path"+path);
+
 
                     //通知service开始传输数据
                     if(bluetoothService!=null){
