@@ -1,6 +1,4 @@
 package com.example.dell.filetransfer_bluetooth.ui;
-import android.bluetooth.BluetoothAdapter;
-import android.content.Intent;
 import android.content.res.Resources;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
@@ -11,8 +9,6 @@ import android.widget.ImageView;
 import android.widget.TabWidget;
 
 import com.example.dell.filetransfer_bluetooth.R;
-
-import java.io.IOException;
 
 public class MainActivity extends BaseTabActivity {
 
@@ -57,9 +53,9 @@ public class MainActivity extends BaseTabActivity {
         mViewPager = (ViewPager) findViewById(R.id.viewpager_bodyfit);
         mTabWidget.setStripEnabled(false);
 
-        Fragment targetFragment=new TargetFragment();
+        Fragment targetFragment=new SendRecordFragment();
         Fragment exerciseFragment=new TransfereFragment();
-        Fragment profileFragment=new ProfileFragment();
+        Fragment profileFragment=new ReceiveRecordFragment();
 
         LayoutInflater inflater=getLayoutInflater();
         Resources resources=getResources();

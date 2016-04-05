@@ -17,7 +17,7 @@ public class ReceiveDatabase {
                 new String[]{phoneName,mTime,fileName});
     }
     public void delete(int id){
-        db.getWritableDatabase().execSQL("delete from receive where id="+id);
+        db.getWritableDatabase().execSQL("delete from receive where _id="+id);
     }
     public Cursor query(){
         return db.getReadableDatabase().rawQuery("select * from receive",null);

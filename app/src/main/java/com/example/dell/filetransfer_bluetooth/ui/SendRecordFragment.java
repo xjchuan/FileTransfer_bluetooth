@@ -8,13 +8,15 @@ import android.view.ViewGroup;
 
 import com.example.dell.filetransfer_bluetooth.R;
 
-public class ProfileFragment extends Fragment {
-    public static final String TAG="ProfileFragment";
 
+
+public class SendRecordFragment extends Fragment {
+    public static final String TAG = "SendRecordFragment";
 
     @Override
-    public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         //final View view = inflater.inflate(R.layout.layout, container, false);
         return null;
     }
- }
+
+}

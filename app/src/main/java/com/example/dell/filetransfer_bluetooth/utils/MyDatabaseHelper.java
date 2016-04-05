@@ -13,10 +13,10 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
     static int v;
 
     //sql language
-    final String Create_Table_Receive = "create table receive(id integer primary key autoincrement , phoneName," +
+    final String Create_Table_Receive = "create table receive(_id integer primary key autoincrement , phoneName," +
             "mTime,fileName)";
-    final String Create_Table_Send = "create table send(id integer primary key autoincrement , phoneName," +
-            "time,fileName)";
+    final String Create_Table_Send = "create table send(_id integer primary key autoincrement , phoneName," +
+            "mTime,fileName)";
 
     private MyDatabaseHelper(Context context, String name, int version) {
         super(context, name, null, version);

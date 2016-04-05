@@ -326,13 +326,13 @@ public class BluetoothService extends Service {
             } finally {
                 if(rd!=null)
                     rd.close();
-
+/*
                 if (dis != null)
                     try {
                         dis.close();
                     } catch (IOException e) {
                         e.printStackTrace();
-                    }
+                    }*/
             }
 
         }

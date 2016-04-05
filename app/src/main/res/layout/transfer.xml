@@ -15,5 +15,5 @@
         android:id="@+id/selectPicture"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="选择图片传输"/>
+        android:text="选择文件传输"/>
 </LinearLayout>

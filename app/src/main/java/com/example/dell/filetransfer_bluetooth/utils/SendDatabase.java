@@ -17,7 +17,7 @@ public class SendDatabase {
                 new String[]{phoneName,mTime,fileName});
     }
     public void delete(int id){
-        db.getWritableDatabase().execSQL("delete from send where id="+id);
+        db.getWritableDatabase().execSQL("delete from send where _id="+id);
     }
     public Cursor query(){
         return db.getReadableDatabase().rawQuery("select * from send",null);
