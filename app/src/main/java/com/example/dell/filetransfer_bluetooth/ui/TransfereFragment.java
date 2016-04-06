@@ -18,9 +18,6 @@ import android.widget.ToggleButton;
 
 import com.example.dell.filetransfer_bluetooth.R;
 import com.example.dell.filetransfer_bluetooth.bluetooth.BluetoothFragment;
-import com.example.dell.filetransfer_bluetooth.utils.FileUtils;
-import com.example.dell.filetransfer_bluetooth.utils.ReceiveDatabase;
-import com.example.dell.filetransfer_bluetooth.utils.SendDatabase;
 
 
 public class TransfereFragment extends BluetoothFragment {

@@ -46,7 +46,9 @@ public abstract class BaseTabActivity extends FragmentActivity{
 
         }
     }
-
+    public void setNotifyChange(){
+        mPagerAdapter.notifyDataSetChanged();
+    }
     protected ViewPager getViewPager() {
         return null;
     }
@@ -140,6 +142,15 @@ public abstract class BaseTabActivity extends FragmentActivity{
         public int getCount() {
             return mFragList.size();
         }
+
+        @Override
+        public int getItemPosition(Object object) {
+            if(object instanceof  ReceiveRecordFragment ||
+                    object instanceof  SendRecordFragment)
+                return POSITION_NONE;
+            return POSITION_UNCHANGED;
+        }
+
     }
 
     private class ViewPageChangeListener implements ViewPager.OnPageChangeListener {

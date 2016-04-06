@@ -1,5 +1,6 @@
 package com.example.dell.filetransfer_bluetooth.bluetooth;
 
+import android.app.Activity;
 import android.app.DownloadManager;
 import android.app.ProgressDialog;
 import android.app.Service;
@@ -28,8 +29,6 @@ import com.example.dell.filetransfer_bluetooth.utils.FileUtils;
 import com.example.dell.filetransfer_bluetooth.utils.ReceiveDatabase;
 import com.example.dell.filetransfer_bluetooth.utils.SendDatabase;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -55,12 +54,10 @@ public class BluetoothService extends Service {
     private String bluetoothName;
     public BluetoothDevice bluetoothDevice;
     private BluetoothSocket bluetoothSocket;
-    private Thread bluetoothDataReadThread;
 
     private Handler handler;
     private Context context;
-    BroadcastReceiver accptedbroadcastReceiver;
-    BroadcastReceiver sendedbroadcastReceiver;
+    Activity activity;
     public BluetoothService(){}
 
     @Override
@@ -90,6 +87,9 @@ public class BluetoothService extends Service {
         return new MyBinder();
     }
 
+    public void setActivity(Activity activity){
+        this.activity = activity;
+    }
     @Override
     public boolean onUnbind(Intent intent){
         Log.i(TAG, "onUnbind()");
@@ -190,7 +190,7 @@ public class BluetoothService extends Service {
                         handler.sendEmptyMessage(R.integer.change_buttonUnused);
                         new heartPackage().start();
                         bluetoothDevice = device;
-
+                        bluetoothName=name;
                         //等待读取数据
                         new Thread(new BluetoothDataReadTask()).start();
                     } catch (IOException e) {
@@ -299,21 +299,30 @@ public class BluetoothService extends Service {
         public void run() {
             InputStream dis = null;
             ReceiveDatabase rd = null;
-            StringBuilder sb = new StringBuilder();
+            String sb = new String();
             try {
                 Log.i(TAG, "get inputStream");
                 dis = bluetoothSocket.getInputStream();
                 byte[] buffer = new byte[1024];
                 int length;
-                while (bluetoothSocket.isConnected() && bluetoothSocket != null) {
-                    sb.delete(0,sb.length());
+                while ( bluetoothSocket != null && bluetoothSocket.isConnected()) {
+                    sb="";
                     while ((length = dis.read(buffer,0,buffer.length)) > 1)
-                        Log.i(TAG, "buffer content: " + sb.append(new String(buffer,0,length, "UTF-8")));
-                    if(sb.length()!=0){
+                        sb+=(new String(buffer,0,length, "UTF-8"));
+                    if(!sb.equals("")){
                         rd = new ReceiveDatabase(context,"receive,db3",2);
-                        rd.insert(bluetoothName,
-                                new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date()),
-                                sb.toString());
+                        rd.setActivity(activity);
+                        final ReceiveDatabase finalRd = rd;
+                        final String finalSb = sb;
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                finalRd.insert(bluetoothName,
+                                        new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date()),
+                                        finalSb);
+                            }
+                        });
+
                         rd.close();
                     }
                     Thread.sleep(1*1000);
@@ -364,9 +373,16 @@ public class BluetoothService extends Service {
                 dos.flush();
                 Log.i(TAG, "sending content: " + s);
                 sd = new SendDatabase(context,"send,db3",2);
-                sd.insert(bluetoothName,
-                        new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date()),
-                        s);
+                sd.setActivity(activity);
+                final SendDatabase finalSd = sd;
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        finalSd.insert(bluetoothName,
+                                new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date()),
+                                s);
+                    }
+                });
                 sd.close();
             } catch (IOException e) {
                 Log.e(TAG, "DataOutputStream is closed!");
