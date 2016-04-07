@@ -1,3 +1,6 @@
 # FileTransfer_bluetooth
-蓝牙文件传输，能够记录传输记录和发送记录并显示
-Activity，Fragment，Service,BroadCastReceiver,AsncTask,sqlite,多线程等均有涉及
+Function: Transfer file via bluetooth</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Store and display the record of sending and receiving file</br>
+
+Using Activity,Fragment,Service,BroadcastReceiver,AsyncTask,Handler,SQLite,MultiThread,Bluetooth and so on 
