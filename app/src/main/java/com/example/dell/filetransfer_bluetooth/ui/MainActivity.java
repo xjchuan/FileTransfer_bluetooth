@@ -62,13 +62,13 @@ public class MainActivity extends BaseTabActivity {
 
         //使用setImageResource就不会变形，用setBackgroundResource就会
         ImageView targetTab=(ImageView)inflater.inflate(R.layout.layout_tab,mTabWidget,false);
-        targetTab.setImageResource(R.drawable.target_seletor);
+        targetTab.setImageResource(R.drawable.send_seletor);
 
         ImageView exerciseTab=(ImageView)inflater.inflate(R.layout.layout_tab,mTabWidget,false);
-        exerciseTab.setImageResource(R.drawable.sport_seletor);
+        exerciseTab.setImageResource(R.drawable.transfer_seletor);
 
         ImageView profileTab=(ImageView)inflater.inflate(R.layout.layout_tab,mTabWidget,false);
-        profileTab.setImageResource(R.drawable.profile_seletor);
+        profileTab.setImageResource(R.drawable.receive_seletor);
 
         addTab(targetTab, targetFragment, "TARGET");
         addTab(exerciseTab,exerciseFragment,"EXERCISE");
