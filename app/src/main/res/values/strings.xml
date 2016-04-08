@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">FileTransfer_bluetooth</string>
+    <string name="app_name">蓝牙文件传输</string>
 
     <integer name="change_buttontext">0x001</integer>
     <integer name="change_buttonUnused">0x002</integer>
