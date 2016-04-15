@@ -59,6 +59,7 @@ public class BluetoothService extends Service {
     private Handler handler;
     private Context context;
     Activity activity;
+    public static final String IDentifier = "***abcdefghijklmnopqrstuvwxyz***";
     public BluetoothService(){}
 
     @Override
@@ -311,23 +312,35 @@ public class BluetoothService extends Service {
                     sb="";
                     while ((length = dis.read(buffer,0,buffer.length)) > 1)
                         sb+=(new String(buffer,0,length, "UTF-8"));
-                    if(!sb.equals("")){
-                        rd = new ReceiveDatabase(context,"receive,db3",2);
-                        rd.setActivity(activity);
-                        final ReceiveDatabase finalRd = rd;
-                        final String finalSb = sb;
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                finalRd.insert(bluetoothName,
-                                        new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date()),
-                                        finalSb);
-                            }
-                        });
+                    if(!sb.equals("")) {
+                        Log.i(TAG,"getText "+sb);
+                        if (!sb.startsWith(IDentifier)) {
+                            rd = new ReceiveDatabase(context, "receive,db3", 2);
+                            rd.setActivity(activity);
+                            final ReceiveDatabase finalRd = rd;
+                            final String finalSb = sb;
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    finalRd.insert(bluetoothName,
+                                            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),
+                                            finalSb);
+                                }
+                            });
 
-                        rd.close();
+                            rd.close();
+                        }
+                        else{
+                            Message msg = new Message();
+                            msg.what = R.integer.chatlog_add;
+                            Bundle b = new Bundle();
+                            sb=sb.substring(IDentifier.length());
+                            b.putString("chat",bluetoothName+": "+sb);
+                            msg.setData(b);
+                            handler.sendMessage(msg);
+                        }
                     }
-                    Thread.sleep(1*1000);
+                    Thread.sleep(500);
                 }
 
             } catch (IOException e) {
@@ -386,7 +399,7 @@ public class BluetoothService extends Service {
                     @Override
                     public void run() {
                         finalSd.insert(bluetoothName,
-                                new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date()),
+                                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),
                                 s);
                     }
                 });
@@ -583,4 +596,26 @@ public class BluetoothService extends Service {
     }
 */
 
+    //发送文字
+    public void sendText(final String s){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                OutputStream dos = null;
+                SendDatabase sd=null;
+                try {
+                    if(bluetoothSocket!=null) {
+
+                        dos = bluetoothSocket.getOutputStream();
+                        byte[] buffer = (IDentifier+s).getBytes();
+                        dos.write(buffer);
+                        dos.flush();
+                        Log.i(TAG, "sending userText: " + s);
+                    }
+                } catch (IOException e) {
+                    Log.e(TAG, "DataOutputStream is closed!");
+                }
+            }
+        }).start();
+    }
 }

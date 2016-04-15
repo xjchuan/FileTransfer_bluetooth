@@ -3,6 +3,7 @@
 
     <integer name="change_buttontext">0x001</integer>
     <integer name="change_buttonUnused">0x002</integer>
+    <integer name="chatlog_add">0x003</integer>
 
     <string name="button_unclick">关</string>
     <string name="button_connected">已连接</string>

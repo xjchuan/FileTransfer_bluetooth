@@ -16,4 +16,21 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="选择文件传输"/>
+
+    <EditText
+        android:id="@+id/userText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+    <Button
+        android:id="@+id/sendButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|center_vertical"
+        android:hint="发送文字"
+        android:text="发送"/>
+    <TextView
+        android:id="@+id/charLog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:singleLine="false"/>
 </LinearLayout>

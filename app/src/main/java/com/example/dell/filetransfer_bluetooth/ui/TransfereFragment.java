@@ -12,7 +12,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -25,6 +28,8 @@ public class TransfereFragment extends BluetoothFragment {
 
     ToggleButton toggleButton;
     Button button;
+    TextView chatLog;
+    EditText editText;
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -61,6 +66,39 @@ public class TransfereFragment extends BluetoothFragment {
                 }
             }
         });
+
+
+        //文字交流部分
+        editText = (EditText)view.findViewById(R.id.userText);
+        Button sendButton = (Button)view.findViewById(R.id.sendButton);
+        chatLog = (TextView)view.findViewById(R.id.charLog);
+        sendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String words = editText.getText().toString();
+                if(words.trim().equals(""))
+                    Toast.makeText(getContext(),"文本不能为空!",Toast.LENGTH_SHORT).show();
+                else{
+                    if(bluetoothService!=null){
+                        bluetoothService.sendText(words);
+                        chatLog.setText(chatLog.getText() + "\n" + "Me: " + words);
+                        editText.setText("");
+                    }
+                    else
+                        Toast.makeText(getContext(),"蓝牙未连接！",Toast.LENGTH_SHORT).show();
+                    editText.clearFocus();
+
+                    InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    boolean isOpen = imm.isActive();
+                    if (isOpen){
+                        imm.hideSoftInputFromWindow(editText.getWindowToken(),
+                                InputMethodManager.HIDE_NOT_ALWAYS);
+                    }
+                }
+
+            }
+        });
+
         return view;
     }
 
@@ -80,6 +118,11 @@ public class TransfereFragment extends BluetoothFragment {
             //toggleButton.setEnabled(false);
             toggleButton.setText(R.string.button_connected);
             button.setEnabled(true);
+        }
+        else if (what == R.integer.chatlog_add) {
+            String chat = bundle.get("chat").toString();
+            if(chat!=null)
+                chatLog.setText(chatLog.getText() + "\n" + chat);
         }
     }
 
