@@ -303,6 +303,7 @@ public class BluetoothService extends Service {
             String sb = new String();
             try {
                 Log.i(TAG, "get inputStream");
+
                 dis = bluetoothSocket.getInputStream();
                 byte[] buffer = new byte[1024];
                 int length;
@@ -368,12 +369,17 @@ public class BluetoothService extends Service {
             OutputStream dos = null;
             SendDatabase sd=null;
             try {
-                dos = bluetoothSocket.getOutputStream();
-                byte[] buffer = s.getBytes();
-                dos.write(buffer);
-                dos.flush();
-                Log.i(TAG, "sending content: " + s);
-                sd = new SendDatabase(context,"send,db3",2);
+                if(bluetoothSocket!=null) {
+
+                    dos = bluetoothSocket.getOutputStream();
+                    byte[] buffer = s.getBytes();
+                    dos.write(buffer);
+                    dos.flush();
+                    Log.i(TAG, "sending content: " + s);
+
+
+                }
+                sd = new SendDatabase(context, "send,db3", 2);
                 sd.setActivity(activity);
                 final SendDatabase finalSd = sd;
                 handler.post(new Runnable() {
