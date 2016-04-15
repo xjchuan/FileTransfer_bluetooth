@@ -38,7 +38,7 @@ public class TransfereFragment extends BluetoothFragment {
         final View view = inflater.inflate(R.layout.transfer, container, false);
 
         button = (Button)view.findViewById(R.id.selectPicture);
-        button.setEnabled(false);
+        //button.setEnabled(false);
         toggleButton = (ToggleButton)view.findViewById(R.id.bluetooth_open);
 
         button.setOnClickListener(new View.OnClickListener() {
@@ -67,7 +67,7 @@ public class TransfereFragment extends BluetoothFragment {
     @Override
     public void updateUI(int what,Bundle bundle){
         if(what == R.integer.change_buttontext) {
-            button.setEnabled(false);
+            //button.setEnabled(false);
             toggleButton.setEnabled(true);
             toggleButton.setText(R.string.button_unclick);
             toggleButton.setChecked(false);
@@ -77,7 +77,7 @@ public class TransfereFragment extends BluetoothFragment {
                 Toast.makeText(c,"连接已断开", Toast.LENGTH_SHORT).show();
         }
         else if (what == R.integer.change_buttonUnused) {
-            toggleButton.setEnabled(false);
+            //toggleButton.setEnabled(false);
             toggleButton.setText(R.string.button_connected);
             button.setEnabled(true);
         }

@@ -17,6 +17,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -116,9 +117,9 @@ public class BluetoothService extends Service {
         this.context=c;
     }
 
-    public void setBluetoothAddressAndNameAndDevice(String bluetoothAddress,String bluetoothName,BluetoothDevice d){
-        this.bluetoothAddress=bluetoothAddress;
-        this.bluetoothName = bluetoothName;
+    public void setBluetoothAddressAndNameAndDevice(BluetoothDevice d){
+        this.bluetoothAddress=d.getAddress();
+        this.bluetoothName = d.getName();
         this.bluetoothDevice = d;
     }
 
@@ -439,9 +440,13 @@ public class BluetoothService extends Service {
 
             Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
             sharingIntent.setType("*/*");
-            sharingIntent.setComponent(
-                    new ComponentName("com.android.bluetooth",
-                            "com.android.bluetooth.opp.BluetoothOppLauncherActivity"));
+            if(Build.VERSION.SDK_INT < 11){
+                sharingIntent.setPackage("com.android.bluetooth");
+            }else{
+                sharingIntent.setComponent(new ComponentName("com.android.bluetooth",
+                        "com.android.bluetooth.opp.BluetoothOppLauncherActivity"));
+            }
+            sharingIntent.setPackage("com.android.bluetooth");
             sharingIntent.putExtra(Intent.EXTRA_STREAM, uri);
             sharingIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(sharingIntent);

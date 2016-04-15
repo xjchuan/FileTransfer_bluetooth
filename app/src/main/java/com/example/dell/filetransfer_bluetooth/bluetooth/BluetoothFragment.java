@@ -39,10 +39,7 @@ public abstract class BluetoothFragment extends Fragment {
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface arg0, final int which) {
                                     bluetoothService.stopDiscovery();
-                                    bluetoothService.setBluetoothAddressAndNameAndDevice(bluetoothService
-                                                    .getDeviceArrayList().get(which).getAddress(),
-                                            bluetoothService
-                                                    .getDeviceArrayList().get(which).getName(),
+                                    bluetoothService.setBluetoothAddressAndNameAndDevice(
                                             bluetoothService
                                                     .getDeviceArrayList().get(which));
                                     bluetoothService.connectToDevice();
